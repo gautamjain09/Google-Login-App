@@ -1,20 +1,31 @@
 package com.gautamjain.googleloginapp;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.AuthResult;
+import com.google.firebase.auth.FirebaseAuth;
+
 public class RegisterActivity extends AppCompatActivity {
 
-    TextView signin;
-    Button Registerbtn;
-    EditText inputemail, inputpassword, inputconfirmPassword, inputusername;
+    private TextView signin;
+    private Button Registerbtn;
+    private EditText inputemail, inputpassword, inputconfirmPassword, inputusername;
+
+    private FirebaseAuth mAuth;
+    private ProgressDialog pd;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -23,6 +34,9 @@ public class RegisterActivity extends AppCompatActivity {
 
         signin = findViewById(R.id.loginFromRegister);
         Registerbtn = findViewById(R.id.Registerbtn);
+
+        mAuth = FirebaseAuth.getInstance();
+        pd = new ProgressDialog(RegisterActivity.this);
 
         inputemail = findViewById(R.id.inputEmail);
         inputusername =findViewById(R.id.inputUsername);
@@ -68,12 +82,39 @@ public class RegisterActivity extends AppCompatActivity {
         {
             showError(inputconfirmPassword, "Password not Match!");
         }
+        else
+        {
+            pd.setTitle("Registration");
+            pd.setMessage("Loading...");
+            pd.setCanceledOnTouchOutside(false);
+            pd.show();
+
+            mAuth.createUserWithEmailAndPassword(email, password).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
+                @Override
+                public void onComplete(@NonNull Task<AuthResult> task) {
+                    if(task.isSuccessful())
+                    {
+                        Toast.makeText(RegisterActivity.this, "Registered Successfully", Toast.LENGTH_SHORT).show();
+
+                        pd.dismiss();
+                        Intent intent = new Intent(RegisterActivity.this, MainActivity.class);
+                        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(intent);
+
+
+                    }
+                    else
+                    {
+                        Toast.makeText(RegisterActivity.this, task.getException().toString(), Toast.LENGTH_SHORT).show();
+                    }
+                }
+            });
+        }
     }
 
     private void showError(EditText input, String s) {
         input.setError(s);
         input.requestFocus(); // Focus to show error
     }
-
 
 }
